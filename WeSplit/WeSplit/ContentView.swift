@@ -10,21 +10,39 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var checkAmount = ""
-    @State private var numberOfPeople = 2
-    @State private var tipPercentage = 2
+    @State private var numberOfPeople = ""
+    @State private var tipPercentage = 0
     
     let tipPercentages = [10, 15, 20, 25, 0]
     
-    var totalPerPerson: Double {
-        let peopleCount = Double(numberOfPeople + 2)
+    private var currencyFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        return f
+    }()
+
+    var totalAmount: Double {
         let tipSelection = Double(tipPercentages[tipPercentage])
         let orderAmount = Double(checkAmount) ?? 0
         
         let tipValue = (orderAmount/100) * tipSelection
         let grandTotal = orderAmount + tipValue
-        let amountPerPerson = grandTotal / peopleCount
         
-        return amountPerPerson
+        return grandTotal
+    }
+    
+    var totalAmountFormatted: String {
+        return currencyFormatter.string(from: NSNumber(value: totalAmount)) ?? ""
+    }
+    
+    var totalPerPerson: Double {
+        let peopleCount = Double((Int(numberOfPeople) ?? 0) + 2)
+        
+        return totalAmount / peopleCount
+    }
+    
+    var totalPerPersonFormatted: String {
+        return currencyFormatter.string(from: NSNumber(value: totalPerPerson)) ?? ""
     }
     
     var body: some View {
@@ -34,15 +52,12 @@ struct ContentView: View {
                     TextField("amount", text: $checkAmount)
                         .keyboardType(.decimalPad)
                     
-                    Picker("Number of people", selection: $numberOfPeople) {
-                        ForEach(2 ..< 100) {
-                            Text("\($0) people")
-                        }
-                    }
+                    TextField("number_of_people", text: $numberOfPeople)
+                        .keyboardType(.numberPad)
                 }
                 
-                Section(header: Text("How much tip do you want to leave?")) {
-                    Picker("Tip percentage", selection: $tipPercentage) {
+                Section(header: Text("how_much_tip_do_you_want_to_leave")) {
+                    Picker("tip_percentage", selection: $tipPercentage) {
                         ForEach(0 ..< tipPercentages.count) {
                             Text("\(self.tipPercentages[$0])%")
                         }
@@ -50,17 +65,26 @@ struct ContentView: View {
                     .pickerStyle(SegmentedPickerStyle())
                 }
                 
-                Section {
-                    Text("$\(totalPerPerson, specifier: "%.2f")")
+                Section(header: Text("total_amount")) {
+                    Text(totalAmountFormatted)
+                }
+                
+                Section(header: Text("amount_per_person")) {
+                    Text(totalPerPersonFormatted)
                 }
             }
-            .navigationBarTitle("WeSplit")
+            .navigationBarTitle("we_split")
         }
     }
 }
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        Group {
+            ContentView()
+                .environment(\.locale, Locale(identifier: "en"))
+            ContentView()
+                .environment(\.locale, Locale(identifier: "pt_br"))
+        }
     }
 }
